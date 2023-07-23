@@ -1,18 +1,23 @@
-import os
-from tkinter import *
 import tkinter as tk
-from tkinter import ttk, messagebox, filedialog
-
+from tkinter import ttk, messagebox
+from tkinter import *
 import pymysql
+from tkinter import Entry
+from tkinter import filedialog
 from PIL import Image, ImageTk
+import os
+from tkinter import Toplevel, Label
+
+
+
 
 def create_registration_window():
-
     def exit_application():
         root.destroy()
 
     def back_to_main():
         pass
+
 
     def GetValue(event):
         e1.delete(0, END)
@@ -27,18 +32,30 @@ def create_registration_window():
         e3.insert(0, select['mobile'])
         e4.insert(0, select['salary'])
 
-    def show():
-        mysqldb = pymysql.connect(host="localhost", user="root", password="", database="pfrsdb")
-        mycursor = mysqldb.cursor()
-        mycursor.execute("SELECT Id,Name,Mobile,Email FROM registration")
-        records = mycursor.fetchall()
-        print(records)
+    def convert_image_to_binary_data(image_path):
+        with open(image_path, 'rb') as file:
+            binary_data = file.read()
+        return binary_data
 
-        for i, (emplyid, emplyname, mobile, email) in enumerate(records, start=1):
-            listBox.insert("", "end", values=(emplyid, emplyname, mobile, email))
+    def upload_image():
+        global img_data
+        global image
 
-        mysqldb.close()
+        file_path = filedialog.askopenfilename()
+        img_data = convert_image_to_binary_data(file_path)
 
+        temp_file_path = "temp_image.jpg"
+        with open(temp_file_path, 'wb') as file:
+            file.write(img_data)
+
+        image = Image.open(temp_file_path)
+        image = image.resize((200, 200))
+        photo = ImageTk.PhotoImage(image)
+
+        image_label.config(image=photo)
+        image_label.image = photo
+
+        os.remove(temp_file_path)
 
     def Add():
         emplyid = e1.get()
@@ -68,7 +85,6 @@ def create_registration_window():
             print(e)
             mysqldb.rollback()
             mysqldb.close()
-
 
     def update():
         emplyid = e1.get()
@@ -100,36 +116,53 @@ def create_registration_window():
             mysqldb.rollback()
             mysqldb.close()
 
+    def delete():
+        emplyid = e1.get()
 
-    def convert_image_to_binary_data(image_path):
-        with open(image_path, 'rb') as file:
-            binary_data = file.read()
-        return binary_data
+        mysqldb = pymysql.connect(host="localhost", user="root", password="", database="pfrsdb")
+        mycursor = mysqldb.cursor()
 
-    def upload_image():
-        global img_data
-        global image
+        try:
+            sql = "delete from registration where id = %s"
+            val = (emplyid)
+            mycursor.execute(sql, val)
+            mysqldb.commit()
+            lastid = mycursor.lastrowid
+            messagebox.showinfo("information", "Record Deleteeeee successfully...")
 
-        file_path = filedialog.askopenfilename()
-        img_data = convert_image_to_binary_data(file_path)
+            e1.delete(0, END)
+            e2.delete(0, END)
+            e3.delete(0, END)
+            e4.delete(0, END)
+            e1.focus_set()
 
-        temp_file_path = "temp_image.jpg"
-        with open(temp_file_path, 'wb') as file:
-            file.write(img_data)
+        except Exception as e:
 
-        image = Image.open(temp_file_path)
-        image = image.resize((200, 200))
-        photo = ImageTk.PhotoImage(image)
+            print(e)
+            mysqldb.rollback()
+            mysqldb.close()
 
-        image_label.config(image=photo)
-        image_label.image = photo
+    def show():
+        mysqldb = pymysql.connect(host="localhost", user="root", password="", database="pfrsdb")
+        mycursor = mysqldb.cursor()
+        mycursor.execute("SELECT Id,Name,Mobile,Email FROM registration")
+        records = mycursor.fetchall()
+        print(records)
 
-        os.remove(temp_file_path)
+        for i, (emplyid, emplyname, mobile, email) in enumerate(records, start=1):
+            listBox.insert("", "end", values=(emplyid, emplyname, mobile, email))
 
+        mysqldb.close()
 
     root = Tk()
     root.title("Face Recognition Attendance System")
-    root.geometry("820x500")
+
+    screen_width = root.winfo_screenwidth()
+    screen_height = root.winfo_screenheight()
+    x = (screen_width - 800) // 2
+    y = (screen_height - 485) // 2
+    root.geometry(f"800x485+{x}+{y}")
+    root.resizable(False, False)
 
     tk.Label(root, text="Employee Registration", fg="red", font=(None, 15)).place(x=290, y=5)
 
@@ -147,6 +180,7 @@ def create_registration_window():
     global e3
     global e4
 
+
     e1 = Entry(root, font=(None, 11))
     e1.place(x=140, y=40)
 
@@ -160,10 +194,10 @@ def create_registration_window():
     e4.place(x=140, y=130)
 
     Button(root, text="Add", command=Add, height=2, width=10, font=(None, 11)).place(x=10, y=180)
-    Button(root, text="update",  command=update, height=2, width=10, font=(None, 11)).place(x=130, y=180)
-    Button(root, text="Delete",  height=2, width=10, font=(None, 11)).place(x=250, y=180)
+    Button(root, text="update", command=update, height=2, width=10, font=(None, 11)).place(x=130, y=180)
+    Button(root, text="Delete", command=delete, height=2, width=10, font=(None, 11)).place(x=250, y=180)
     Button(root, text="Back", command=back_to_main, height=2, width=10, font=(None, 11)).place(x=370, y=180)
-    Button(root, text="Exit",  command=exit_application, height=2, width=10, font=(None, 11)).place(x=490, y=180)
+    Button(root, text="Exit", command=exit_application, height=2, width=10, font=(None, 11)).place(x=490, y=180)
 
     cols = ('Id', 'Name', 'Mobile', 'Email')
     listBox = ttk.Treeview(root, columns=cols, show='headings')
@@ -173,10 +207,7 @@ def create_registration_window():
         listBox.grid(row=1, column=0, columnspan=2)
         listBox.place(x=10, y=250)
 
-
-    listBox.bind('<Double-Button-1>', GetValue)
     show()
+    listBox.bind('<Double-Button-1>', GetValue)
+
     root.mainloop()
-
-
-create_registration_window()

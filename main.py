@@ -20,11 +20,13 @@ def exit_application():
 
 engine = pyttsx3.init()
 
+
 def speaknow(text):
     engine.setProperty('rate', 150)
     engine.say(text)
     engine.runAndWait()
     engine.stop()
+
 
 def retrieve_images_and_names_from_database():
     try:
@@ -66,7 +68,12 @@ for image_data, name in zip(images_from_database, names_from_database):
 
 root = Tk()
 root.title("Face Recognition System")
-root.geometry("800x485+300+200")
+
+screen_width = root.winfo_screenwidth()
+screen_height = root.winfo_screenheight()
+x = (screen_width - 800) // 2
+y = (screen_height - 485) // 2
+root.geometry(f"800x485+{x}+{y}")
 root.resizable(False, False)
 
 frame_label = Label(root)
