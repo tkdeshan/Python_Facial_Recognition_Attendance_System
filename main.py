@@ -3,9 +3,11 @@ import cv2
 import face_recognition as fr
 from PIL import Image, ImageTk
 import numpy as np
+import pyttsx3
 import pymysql
 
 from register import create_registration_window
+
 
 def register():
     root.destroy()  # Close the main window
@@ -16,6 +18,13 @@ def exit_application():
     root.destroy()
 
 
+engine = pyttsx3.init()
+
+def speaknow(text):
+    engine.setProperty('rate', 150)
+    engine.say(text)
+    engine.runAndWait()
+    engine.stop()
 
 def retrieve_images_and_names_from_database():
     try:
@@ -68,14 +77,14 @@ video_capture = cv2.VideoCapture(0)
 text = "Please try again."
 
 def update_frame():
-
+    global text
     ret, frame = video_capture.read()
     rgb_frame = frame[:, :, ::-1]
     fc_location = fr.face_locations(rgb_frame)
     fc_encodings = fr.face_encodings(rgb_frame, fc_location)
 
     for (top, right, bottom, left), face_encoding in zip(fc_location, fc_encodings):
-
+        name = "Unknown"
         text = "Please try again. If not registered, please register first."
         matches = fr.compare_faces(known_face_encodings, face_encoding)
 
@@ -84,7 +93,7 @@ def update_frame():
 
         if matches[match_index]:
             name = known_face_names[match_index]
-            text = "Good Morning " + name + ". Successfully recorded your attendance. Have a nice day."
+            text = "Good Morning " + name + ". You are presented. Have a nice day."
 
         cv2.rectangle(frame, (left, top), (right, bottom), (0, 0, 255), 2)
         cv2.rectangle(frame, (left, bottom - 35), (right, bottom), (0, 0, 255), cv2.FILLED)
@@ -101,10 +110,7 @@ def update_frame():
 
 update_frame()
 
-
-
-
-Button(root, text="Present", height=2, width=10, font=(None, 11)).place(x=670, y=100)
+Button(root, text="Present", command=lambda: speaknow(text), height=2, width=10, font=(None, 11)).place(x=670, y=100)
 Button(root, text="Add new", command=register, height=2, width=10, font=(None, 11)).place(x=670, y=200)
 Button(root, text="Exit", command=exit_application, height=2, width=10, font=(None, 11)).place(x=670, y=300)
 
