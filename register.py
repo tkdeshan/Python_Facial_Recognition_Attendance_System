@@ -70,6 +70,37 @@ def create_registration_window():
             mysqldb.close()
 
 
+    def update():
+        emplyid = e1.get()
+        emplyname = e2.get()
+        mobile = e3.get()
+        email = e4.get()
+        img = img_data
+
+        mysqldb = pymysql.connect(host="localhost", user="root", password="", database="pfrsdb")
+        mycursor = mysqldb.cursor()
+
+        try:
+            sql = "Update registration set Name= %s,Mobile= %s,Email= %s,Image=%s where id= %s"
+            val = (emplyname, mobile, email, img, emplyid)
+            mycursor.execute(sql, val)
+            mysqldb.commit()
+            lastid = mycursor.lastrowid
+            messagebox.showinfo("information", "Record Updateddddd successfully...")
+
+            e1.delete(0, END)
+            e2.delete(0, END)
+            e3.delete(0, END)
+            e4.delete(0, END)
+            e1.focus_set()
+
+        except Exception as e:
+
+            print(e)
+            mysqldb.rollback()
+            mysqldb.close()
+
+
     def convert_image_to_binary_data(image_path):
         with open(image_path, 'rb') as file:
             binary_data = file.read()
@@ -129,7 +160,7 @@ def create_registration_window():
     e4.place(x=140, y=130)
 
     Button(root, text="Add", command=Add, height=2, width=10, font=(None, 11)).place(x=10, y=180)
-    Button(root, text="update", height=2, width=10, font=(None, 11)).place(x=130, y=180)
+    Button(root, text="update",  command=update, height=2, width=10, font=(None, 11)).place(x=130, y=180)
     Button(root, text="Delete",  height=2, width=10, font=(None, 11)).place(x=250, y=180)
     Button(root, text="Back", command=back_to_main, height=2, width=10, font=(None, 11)).place(x=370, y=180)
     Button(root, text="Exit",  command=exit_application, height=2, width=10, font=(None, 11)).place(x=490, y=180)
